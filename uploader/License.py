@@ -50,7 +50,7 @@ class License:
         """Returns IDL licenses that were in use by the current workflow execution.
         """
         
-        ssm = boto3.client("ssm", region_name="us_west_2")
+        ssm = boto3.client("ssm", region_name="us-west-2")
         try:
             # Get number of licenses that were used in the workflow
             dataset_lic = ssm.get_parameter(Name=f"{self.prefix}-idl-{self.dataset}-{self.unique_id}-lic")["Parameter"]["Value"]
