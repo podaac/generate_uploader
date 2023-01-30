@@ -1,6 +1,6 @@
-# upload
+# uploader
 
-The upload component uploads the final L2P output of Generate to an S3 bucket and updates the Parameter Store to "return" the IDL licenses that were in used by workflow execution.
+The uploader component uploads the final L2P output of Generate to an S3 bucket and updates the Parameter Store to "return" the IDL licenses that were in use by the workflow execution.
 
 Top-level Generate repo: https://github.com/podaac/generate
 
@@ -10,23 +10,39 @@ None
 
 ## build command
 
-`docker build --tag upload:0.1 . `
+`docker build --tag uploader:0.1 . `
 
 ## execute command
 
 Arguments:
-1.	
+1. unique_id: Integer to identify IDL licenses used by workflow in Parameter Store.
+2. prefix: String Prefix for environment that Generate is executing in.
+3. job_index: Integer index for current job. Enter "-235" if running in AWS.
+4. last_job_index: Integer last AWS Batch upload job index. Enter "-1" for no index.
+5. input_json: Path to input JSON file to determine data to upload.
+6. data_dir: Path to directory that contains processor data.
+7. processing_type: String 'quicklook' or 'refined'.
+8. dataset: Name of dataset that has been processed.
 
-MODIS A: 
-`docker run --name gen-test -v /downloader/input:/data/input -v /downloader/logs:/data/logs -v /downloader/output:/data/output -v /downloader/scratch:/data/scratch downloader:0.1 /data/lists 0 L2 SPACE MODIS_A /data/output 5 1 yes yess`
+MODIS A QUICKLOOK: 
+`docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_AQUA_quicklook_2.json /data quicklook aqua`
 
-MODIS T: 
-`docker run --name gen-test -v /downloader/input:/data/input -v /downloader/logs:/data/logs -v /downloader/output:/data/output -v /downloader/scratch:/data/scratch downloader:0.1 /data/lists 0 L2 SPACE MODIS_T /data/output 5 1 yes yes`
+MODIS A REFINED:
+`docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_AQUA_refined_2.json /data refined aqua`
 
-VIIRS: 
-`docker run --name gen-test -v /downloader/input:/data/input -v /downloader/logs:/data/logs -v /downloader/output:/data/output -v /downloader/scratch:/data/scratch downloader:0.1 /data/lists 0 L2 SPACE VIIRS /data/output 5 1 yes yes`
+MODIS T QUICKLOOK: 
+`docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_TERRA_quicklook_2.json /data quicklook terra`
 
-Please note that in order for the commands to execute the `/downloader/` directories will need to point to actual directories on the system.
+MODIS T REFINED:
+`docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_TERRA_refined_2.json /data refined terra`
+
+VIIRS QUICKLOOK: 
+`docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_VIIRS_quicklook_2.json /data quicklook viirs`
+
+VIIRS REFINED:
+`docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_VIIRS_refined_2.json /data refined viirs`
+
+Please note that in order for the commands to execute the `/uploader/` directories will need to point to actual directories on the system.
 
 ## aws infrastructure
 
@@ -34,6 +50,7 @@ The downloader includes the following AWS services:
 - AWS EFS
 - AWS S3 bucket
 - AWS SSM Parameter Store
+- AWS SNS Topic
 
 ## terraform 
 
