@@ -177,7 +177,7 @@ class Uploader:
             self.logger.error(error_file)
             
         # Send notification
-        sns = boto3.client("sns")
+        sns = boto3.client("sns", region_name="us-west-2")
         try:
             # Locate topic
             topics = sns.list_topics()

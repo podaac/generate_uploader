@@ -118,6 +118,14 @@ resource "aws_iam_policy" "batch_service_role_policy_uploader" {
         "Resource" : "${data.aws_kms_key.aws_s3.arn}"
       },
       {
+        "Sid" : "AllowListTopics",
+        "Effect" : "Allow",
+        "Action" : [
+          "sns:ListTopics"
+        ],
+        "Resource" : "*"
+      },
+      {
         "Sid" : "AllowPublishToTopic",
         "Effect" : "Allow",
         "Action" : [
