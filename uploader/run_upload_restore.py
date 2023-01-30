@@ -50,7 +50,8 @@ def run_uploader():
     uploader.upload()   
     
     # Return IDL licenses if single or last job
-    if last_job_index == -1 or last_job_index == int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX")):
+    batch_job_index = int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX")) if os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX") is not None else -1
+    if last_job_index == -1 or last_job_index == batch_job_index:
         license = License(unique_id, prefix, dataset, logger)
         license.return_licenses()
 
