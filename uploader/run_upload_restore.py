@@ -22,6 +22,7 @@ Args:
 """
 
 # Standard imports 
+import datetime
 import logging
 import os
 import pathlib
@@ -32,6 +33,8 @@ from License import License
 from Uploader import Uploader
 
 def run_uploader():
+    
+    start = datetime.datetime.now()
     
     # Command line arguments
     unique_id = int(sys.argv[1])
@@ -54,6 +57,9 @@ def run_uploader():
     if last_job_index == -1 or last_job_index == batch_job_index:
         license = License(unique_id, prefix, dataset, logger)
         license.return_licenses()
+    
+    end = datetime.datetime.now()
+    logger.info(f"Total execution time: {end - start}")
 
 def check_for_aws_batch_index(job_index):
     """Deterime if running as an AWS Batch job array with an index."""
