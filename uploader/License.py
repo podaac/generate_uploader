@@ -112,15 +112,17 @@ class License:
                 Tier="Standard",
                 Overwrite=True
             )
+            current_floating = ssm.get_parameter(Name=f"{self.prefix}-idl-floating")["Parameter"]["Value"]
+            floating_total = int(floating_lic) + int(current_floating)
             response = ssm.put_parameter(
                 Name=f"{self.prefix}-idl-floating",
                 Type="String",
-                Value=str(floating_lic),
+                Value=str(floating_total),
                 Tier="Standard",
                 Overwrite=True
             )
-            self.logger.info(f"Wrote {dataset_lic} licenses to {self.dataset}.")
-            self.logger.info(f"Wrote {floating_lic} licenses to floating.")
+            self.logger.info(f"Wrote {dataset_lic} license(s) to {self.dataset}.")
+            self.logger.info(f"Wrote {floating_lic} license(s)to floating.")
         except botocore.exceptions.ClientError as e:
             self.logger.error(f"Could not return {self.dataset} and floating licenses...")
             raise e
