@@ -11,8 +11,8 @@ Args:
 [2] prefix: String Prefix for environment that Generate is executing in.
 [3] job_index: Integer index for current job. Enter "-235" if running in AWS.
 [4] last_job_index: Integer last AWS Batch upload job index. Enter "-1" for no index.
-[5] input_json: Path to input JSON file to determine data to upload.
-[6] data_dir: Path to directory that contains processor data.
+[5] data_dir: Path to directory that contains processor data.
+[6] input_json: Path to input JSON file to determine data to upload.
 [7] processing_type: String 'quicklook' or 'refined'.
 [8] dataset: Name of dataset that has been processed.
 
@@ -41,8 +41,8 @@ def run_uploader():
     prefix = sys.argv[2]
     job_index = check_for_aws_batch_index(int(sys.argv[3]))
     last_job_index = int(sys.argv[4])
-    input_json = pathlib.Path(sys.argv[5])
-    data_dir = pathlib.Path(sys.argv[6])
+    data_dir = pathlib.Path(sys.argv[5])
+    input_json = data_dir.joinpath("input", sys.argv[6])
     processing_type = sys.argv[7]
     dataset = sys.argv[8]
     
