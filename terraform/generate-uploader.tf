@@ -131,7 +131,10 @@ resource "aws_iam_policy" "batch_service_role_policy_uploader" {
         "Action" : [
           "sns:Publish"
         ],
-        "Resource" : "${aws_sns_topic.aws_sns_topic_upload_error.arn}"
+        "Resource" : [ 
+          "${aws_sns_topic.aws_sns_topic_upload_error.arn}",
+          "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.prefix}-cumulus"
+        ]
       },
       {
         "Sid" : "AllowSSMGetPut",

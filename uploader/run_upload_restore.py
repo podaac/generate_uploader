@@ -15,6 +15,7 @@ Args:
 [6] input_json: Path to input JSON file to determine data to upload.
 [7] processing_type: String 'quicklook' or 'refined'.
 [8] dataset: Name of dataset that has been processed.
+[9] venue: Name of venue workflow is running in (e.g. sit, uat, ops)
 
 
 'job_index' should be set to -235 for AWS executions or not set at all if a job is executed as a single job and not a job array.
@@ -45,11 +46,13 @@ def run_uploader():
     input_json = data_dir.joinpath("input", sys.argv[6])
     processing_type = sys.argv[7]
     dataset = sys.argv[8]
+    venue = sys.argv[9]
     
     # Uplad L2P granules to S3 Bucket
     logger = get_logger()
     uploader = Uploader(prefix, job_index, last_job_index, \
-                        input_json, data_dir, processing_type, dataset, logger)
+                        input_json, data_dir, processing_type, dataset, logger,
+                        venue)
     uploader.upload()   
     
     # Return IDL licenses if single or last job
