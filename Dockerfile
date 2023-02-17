@@ -17,4 +17,4 @@ RUN /app/env/bin/pip install -r /app/requirements.txt
 # FROM stage2 as stage3
 LABEL version="0.1" \
     description="Containerized Generate: Uploader"
-ENTRYPOINT [ "/app/env/bin/python3", "/app/uploader/run_upload_restore.py" ]
+ENTRYPOINT [ "/app/env/bin/python3", "/app/uploader/run_uploader.py" ]

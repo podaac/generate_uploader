@@ -3,7 +3,6 @@ import datetime
 import hashlib
 import json
 import os
-import pathlib
 
 # Third-part imports
 import boto3
@@ -72,9 +71,8 @@ class Uploader:
         "viirs": "VIIRS_NPP-JPL-L2P-v2016.2"
     }
     
-    def __init__(self, prefix, job_index, last_job_index, \
-                 input_json, data_dir, processing_type, dataset, logger, 
-                 venue):
+    def __init__(self, prefix, job_index, input_json, data_dir, processing_type,
+                 dataset, logger, venue):
         """
         Attributes
         ----------
@@ -82,8 +80,6 @@ class Uploader:
             Prefix for environment that Generate is executing in
         job_index: int
             Index for current job, -235 indicates AWS Batch job
-        last_job_index: int 
-            Last AWS Batch upload job index. Enter "-1" for no index
         input_json: str
             Path to input JSON file to determine data to upload
         data_dir: pathlib.Path
@@ -100,7 +96,6 @@ class Uploader:
         
         self.prefix = prefix
         self.job_index = job_index
-        self.last_job_index = last_job_index
         self.input_json = input_json
         self.data_dir = data_dir
         self.processing_type = processing_type

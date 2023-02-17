@@ -135,16 +135,6 @@ resource "aws_iam_policy" "batch_service_role_policy_uploader" {
           "${aws_sns_topic.aws_sns_topic_upload_error.arn}",
           "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.prefix}-cumulus"
         ]
-      },
-      {
-        "Sid" : "AllowSSMGetPut",
-        "Effect" : "Allow",
-        "Action" : [
-          "ssm:GetParameter",
-          "ssm:PutParameter",
-          "ssm:DeleteParameters"
-        ],
-        "Resource" : "arn:aws:ssm:${var.aws_region}:${local.account_id}:parameter/${var.prefix}*"
       }
     ]
   })
