@@ -55,12 +55,12 @@ class Uploader:
         "terra": {
             "dirname0": "MODIS_L2P_CORE_NETCDF",
             "dirname1": "MODIS_T",
-            "filename_suffix": "TS-JPL-L2P_GHRSST-SSTskin-MODIS_T-T-v02.0-fv01.0",
+            "filename": "TS-JPL-L2P_GHRSST-SSTskin-MODIS_T-T-v02.0-fv01.0",
         },
         "viirs": {
             "dirname0": "VIIRS_L2P_CORE_NETCDF",
             "dirname1": "VIIRS",
-            "filename_suffix": "TS-JPL-L2P_GHRSST-SSTskin-VIIRS_NPP-T-v02.0-fv01.0",
+            "filename": "TS-JPL-L2P_GHRSST-SSTskin-VIIRS_NPP-T-v02.0-fv01.0",
         }
     }
     VERSION = "1.4"
