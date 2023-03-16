@@ -25,6 +25,14 @@ provider "aws" {
 # Data sources
 data "aws_caller_identity" "current" {}
 
+data "aws_cloudwatch_log_group" "cw_log_group" {
+  name = "/aws/batch/job/${var.prefix}-uploader/"
+}
+
+data "aws_ecr_repository" "uploader" {
+  name = "${var.prefix}-uploader"
+}
+
 data "aws_efs_file_system" "aws_efs_generate" {
   creation_token = var.prefix
 }

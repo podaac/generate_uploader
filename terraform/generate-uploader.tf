@@ -1,32 +1,14 @@
-# ECR
-resource "aws_ecr_repository" "uploader" {
-  name = "${var.prefix}-uploader"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-  image_tag_mutability = "MUTABLE"
-  encryption_configuration {
-    encryption_type = "AES256"
-  }
-}
-
-# CloudWatch Logs
-resource "aws_cloudwatch_log_group" "generate_cw_log_group_uploader" {
-  name              = "/aws/batch/job/${var.prefix}-uploader/"
-  retention_in_days = 120
-}
-
 # Job Definition
 resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
   name                  = "${var.prefix}-uploader"
   type                  = "container"
   container_properties  = <<CONTAINER_PROPERTIES
   {
-    "image": "${aws_ecr_repository.uploader.repository_url}:latest",
+    "image": "${data.aws_ecr_repository.uploader.repository_url}:latest",
     "logConfiguration": {
         "logDriver" : "awslogs",
         "options": {
-            "awslogs-group" : "${aws_cloudwatch_log_group.generate_cw_log_group_uploader.name}"
+            "awslogs-group" : "${data.aws_cloudwatch_log_group.cw_log_group.name}"
         }
     },
     "mountPoints": [
@@ -49,7 +31,7 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
             }
         }
     ],
-    "jobRoleArn": "${aws_iam_role.aws_batch_service_role_uploader.arn}",
+    "jobRoleArn": "${aws_iam_role.aws_batch_job_role_uploader.arn}",
     "environment": [
       {
         "name": "TOPIC", "value": "${var.prefix}-upload-error"
@@ -65,8 +47,8 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
 }
 
 # Job role
-resource "aws_iam_role" "aws_batch_service_role_uploader" {
-  name = "${var.prefix}-batch-service-role-uploader"
+resource "aws_iam_role" "aws_batch_job_role_uploader" {
+  name = "${var.prefix}-batch-job-role-uploader"
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -82,13 +64,13 @@ resource "aws_iam_role" "aws_batch_service_role_uploader" {
   permissions_boundary = "arn:aws:iam::${local.account_id}:policy/NGAPShRoleBoundary"
 }
 
-resource "aws_iam_role_policy_attachment" "aws_batch_service_role_policy_attach" {
-  role       = aws_iam_role.aws_batch_service_role_uploader.name
-  policy_arn = aws_iam_policy.batch_service_role_policy_uploader.arn
+resource "aws_iam_role_policy_attachment" "aws_batch_job_role_policy_attach" {
+  role       = aws_iam_role.aws_batch_job_role_uploader.name
+  policy_arn = aws_iam_policy.batch_job_role_policy_uploader.arn
 }
 
-resource "aws_iam_policy" "batch_service_role_policy_uploader" {
-  name        = "${var.prefix}-batch-service-role-policy-uploader"
+resource "aws_iam_policy" "batch_job_role_policy_uploader" {
+  name        = "${var.prefix}-batch-job-policy-uploader"
   description = "Provides access to: SNS, S3, EFS, SSM for uploader containers."
   policy = jsonencode({
     "Version" : "2012-10-17",
