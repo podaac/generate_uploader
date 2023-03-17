@@ -113,9 +113,10 @@ resource "aws_iam_policy" "batch_job_role_policy_uploader" {
         "Action" : [
           "sns:Publish"
         ],
-        "Resource" : [ 
+        "Resource" : [
           "${aws_sns_topic.aws_sns_topic_upload_error.arn}",
-          "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.prefix}-cumulus"
+          "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.prefix}-cumulus",
+          "arn:aws:sns:${var.aws_region}:${var.cross_account_id}:${var.cross_account_prefix}-throttled-provider-input-sns"
         ]
       }
     ]
