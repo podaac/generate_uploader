@@ -101,8 +101,7 @@ class Uploader:
         self.processing_type = processing_type
         self.dataset = dataset
         self.logger = logger
-        # self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"    # TODO - Implement
-        self.cumulus_topic = f"{prefix}-cumulus"
+        self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
         
     def upload(self):
         """Upload L2P granule files found in EFS processor output directory."""
@@ -230,7 +229,8 @@ class Uploader:
                     "checksumType": "md5"
                 }],
                 "dataVersion": self.COLLECTION[self.dataset].split('-')[-1].split('v')[-1]
-            }
+            },
+            "trace": self.prefix
         }
         
         return message
