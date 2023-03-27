@@ -37,10 +37,6 @@ data "aws_efs_file_system" "aws_efs_generate" {
   creation_token = var.prefix
 }
 
-data "aws_kms_key" "aws_s3" {
-  key_id = "alias/aws/s3"
-}
-
 data "aws_s3_bucket" "l2p_granules" {
   bucket = "${var.prefix}-l2p-granules"
 }

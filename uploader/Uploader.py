@@ -185,7 +185,7 @@ class Uploader:
         error_list = []
         for l2p in l2p_list:
             try:
-                response = s3_client.upload_file(str(l2p), bucket, f"{self.dataset}/{l2p.name}", ExtraArgs={"ServerSideEncryption": "aws:kms"})
+                response = s3_client.upload_file(str(l2p), bucket, f"{self.dataset}/{l2p.name}", ExtraArgs={"ServerSideEncryption": "AES256"})
                 l2p_s3.append(f"s3://{bucket}/{self.dataset}/{l2p.name}")
                 self.logger.info(f"File uploaded: {l2p.name}")
             except botocore.exceptions.ClientError as e:
