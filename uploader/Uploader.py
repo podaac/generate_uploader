@@ -3,6 +3,7 @@ import datetime
 import hashlib
 import json
 import os
+import sys
 
 # Third-part imports
 import boto3
@@ -102,6 +103,21 @@ class Uploader:
         self.dataset = dataset
         self.logger = logger
         self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
+        self.cross_account = self.get_cross_account_id(prefix)
+        
+    def get_cross_account_id(self, prefix):
+        """Return cross account identifier from SSM parameter store."""
+        
+        try:
+            ssm_client = boto3.client('ssm', region_name="us-west-2")
+            cross_account = ssm_client.get_parameter(Name=f"{prefix}-cumulus-account", WithDecryption=True)["Parameter"]["Value"]
+        except botocore.exceptions.ClientError as error:
+            self.logger.error(f"Failed to obtain cross account identifier for Cumulus topic.")
+            self.logger.error(f"Error - {error}")
+            self.logger.info(f"System exit.")
+            sys.exit(1)
+        
+        return cross_account
         
     def upload(self):
         """Upload L2P granule files found in EFS processor output directory."""
@@ -249,13 +265,8 @@ class Uploader:
         # Send notification
         errors = []
         try:
-            # Locate topic
-            topics = sns.list_topics()
-            topic = list(filter(lambda x: (self.cumulus_topic in x["TopicArn"]), topics["Topics"]))
-                
-            # Publish message
             response = sns.publish(
-                TopicArn = topic[0]["TopicArn"],
+                TopicArn = f"arn:aws:sns:us-west-2:{self.cross_account}:{self.cumulus_topic}",
                 Message = json.dumps(message),
             )
             self.logger.info(f"{message['identifier']} message published to SNS Topic: {self.cumulus_topic}")
@@ -313,6 +324,7 @@ class Uploader:
             self.logger.error(f"Failed to publish to SNS Topic: {topic[0]['TopicArn']}")
             self.logger.error(f"Error - {e}")
             self.logger.info(f"System exit.")
-            exit(1)
+            sys.exit(1)
         
         self.logger.info(f"Message published to SNS Topic: {topic[0]['TopicArn']}")
+        sys.exit(1)

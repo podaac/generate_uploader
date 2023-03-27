@@ -46,6 +46,14 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
   }
 }
 
+# Cross account ID parameter
+resource "aws_ssm_parameter" "aws_ssm_parameter_cumulus" {
+  name        = "${var.prefix}-cumulus-account"
+  description = "SNS Cumulus topic cross account identifier"
+  type        = "SecureString"
+  value       = var.cross_account_id
+}
+
 # Job role
 resource "aws_iam_role" "aws_batch_job_role_uploader" {
   name = "${var.prefix}-batch-job-role-uploader"
@@ -115,8 +123,16 @@ resource "aws_iam_policy" "batch_job_role_policy_uploader" {
         ],
         "Resource" : [
           "${aws_sns_topic.aws_sns_topic_upload_error.arn}",
-          "arn:aws:sns:${var.aws_region}:${var.cross_account_id}:${var.cross_account_prefix}-throttled-provider-input-sns"
+          "arn:aws:sns:${var.aws_region}:${var.cross_account_id}:${var.cross_account_prefix}-throttled-provider-input-sns",
         ]
+      },
+      {
+        "Sid" : "AllowGetParameter",
+        "Effect" : "Allow",
+        "Action" : [
+          "ssm:GetParameter"
+        ],
+        "Resource" : "${aws_ssm_parameter.aws_ssm_parameter_cumulus.arn}"
       }
     ]
   })
