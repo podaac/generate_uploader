@@ -100,14 +100,6 @@ resource "aws_iam_policy" "batch_job_role_policy_uploader" {
         "Resource" : "${data.aws_s3_bucket.l2p_granules.arn}/*"
       },
       {
-        "Sid" : "AllowKMSKeyAccess",
-        "Effect" : "Allow",
-        "Action" : [
-          "kms:GenerateDataKey"
-        ],
-        "Resource" : "${data.aws_kms_key.aws_s3.arn}"
-      },
-      {
         "Sid" : "AllowListTopics",
         "Effect" : "Allow",
         "Action" : [
