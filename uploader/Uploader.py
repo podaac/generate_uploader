@@ -185,8 +185,8 @@ class Uploader:
         error_list = []
         for l2p in l2p_list:
             try:
-                response = s3_client.upload_file(str(l2p), bucket, l2p.name, ExtraArgs={"ServerSideEncryption": "aws:kms"})
-                l2p_s3.append(f"s3://{bucket}/{l2p.name}")
+                response = s3_client.upload_file(str(l2p), bucket, f"{self.dataset}/{l2p.name}", ExtraArgs={"ServerSideEncryption": "aws:kms"})
+                l2p_s3.append(f"s3://{bucket}/{self.dataset}/{l2p.name}")
                 self.logger.info(f"File uploaded: {l2p.name}")
             except botocore.exceptions.ClientError as e:
                 self.logger.error(e)
@@ -210,7 +210,7 @@ class Uploader:
         """Create message to be published."""
         
         # Locate file on EFS
-        filename = l2p.split('/')[3].split('.nc')[0]
+        filename = l2p.split('/')[4].split('.nc')[0]
         dataset_dict = self.DATA_DICT[self.dataset]
         dirname1 = dataset_dict["dirname1"] if self.processing_type == "quicklook" else f"{dataset_dict['dirname1']}_REFINED"
         ts = filename.split('-')[0]
