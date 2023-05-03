@@ -190,9 +190,9 @@ class Uploader:
             try:
                 response = s3_client.upload_file(str(l2p), bucket, f"{self.dataset}/{l2p.name}", ExtraArgs={"ServerSideEncryption": "AES256"})
                 l2p_s3.append(f"s3://{bucket}/{self.dataset}/{l2p.name}")
-                self.logger.info(f"File uploaded: {l2p.name}")
+                self.logger.info(f"File uploaded: s3://{bucket}/{self.dataset}/{l2p.name}.")
             except botocore.exceptions.ClientError as e:
-                self.logger.error(e)
+                self.logger.error(f"Error encoutered: {e}.")
                 error_list.append(l2p)
                 
         return l2p_s3, error_list
