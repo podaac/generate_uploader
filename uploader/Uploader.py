@@ -127,11 +127,14 @@ class Uploader:
         
         errors = {}
         l2p_list, errors["missing_checksum"] = self.load_efs_l2p()
-        l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
-        sns = boto3.client("sns", region_name="us-west-2")  
-        errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
-        error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
-        if error_count > 0: self.report_errors(sns, errors)  
+        if len(l2p_list) == 0:
+            self.logger.info(f"Did not locate any L2P granules.")
+        else:
+            l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
+            sns = boto3.client("sns", region_name="us-west-2")  
+            errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
+            error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
+            if error_count > 0: self.report_errors(sns, errors)  
         
     def load_efs_l2p(self):
         """Load a list of L2P granules from EFS that have been processed."""
@@ -163,6 +166,7 @@ class Uploader:
                 if checksum.is_file():
                     l2p_list.append(day_file_nc)
                     l2p_list.append(checksum)
+                    self.logger.info(f"Located Day File: {day_file_nc}")
                 else:
                     missing_checksum.append(day_file_nc)
             # Check for night file
@@ -173,6 +177,7 @@ class Uploader:
                 if checksum.is_file():
                     l2p_list.append(night_file_nc)
                     l2p_list.append(checksum)
+                    self.logger.info(f"Located Night File: {night_file_nc}")
                 else:
                     missing_checksum.append(night_file_nc)
                 
