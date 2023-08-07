@@ -1,6 +1,6 @@
 # Stage 0 - Create from Python 3.10-alpine3.15 image
-# FROM python:3.10-alpine3.15 as stage0
-FROM python:3.10-slim-buster
+# FROM python:3.12.0b2-slim-bookworm  as stage0
+FROM python:3.12.0b2-slim-bookworm 
 RUN apt update && apt install -y python3-venv
 
 # Stage 1 - Copy Generate code
