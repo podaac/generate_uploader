@@ -102,10 +102,7 @@ class Uploader:
         self.processing_type = processing_type
         self.dataset = dataset
         self.logger = logger
-        if dataset == "viirs":
-            self.cumulus_topic = f"podaac-{venue}-cumulus-provider-input-sns"
-        else:
-            self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
+        self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
         self.cross_account = self.get_cross_account_id(prefix)
         
     def get_cross_account_id(self, prefix):
@@ -127,11 +124,14 @@ class Uploader:
         
         errors = {}
         l2p_list, errors["missing_checksum"] = self.load_efs_l2p()
-        l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
-        sns = boto3.client("sns", region_name="us-west-2")  
-        errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
-        error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
-        if error_count > 0: self.report_errors(sns, errors)  
+        if len(l2p_list) == 0:
+            self.logger.info(f"Did not locate any L2P granules.")
+        else:
+            l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
+            sns = boto3.client("sns", region_name="us-west-2")  
+            errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
+            error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
+            if error_count > 0: self.report_errors(sns, errors)  
         
     def load_efs_l2p(self):
         """Load a list of L2P granules from EFS that have been processed."""
@@ -163,6 +163,7 @@ class Uploader:
                 if checksum.is_file():
                     l2p_list.append(day_file_nc)
                     l2p_list.append(checksum)
+                    self.logger.info(f"Located Day File: {day_file_nc}")
                 else:
                     missing_checksum.append(day_file_nc)
             # Check for night file
@@ -173,6 +174,7 @@ class Uploader:
                 if checksum.is_file():
                     l2p_list.append(night_file_nc)
                     l2p_list.append(checksum)
+                    self.logger.info(f"Located Night File: {night_file_nc}")
                 else:
                     missing_checksum.append(night_file_nc)
                 
@@ -190,9 +192,9 @@ class Uploader:
             try:
                 response = s3_client.upload_file(str(l2p), bucket, f"{self.dataset}/{l2p.name}", ExtraArgs={"ServerSideEncryption": "AES256"})
                 l2p_s3.append(f"s3://{bucket}/{self.dataset}/{l2p.name}")
-                self.logger.info(f"File uploaded: {l2p.name}")
+                self.logger.info(f"File uploaded: s3://{bucket}/{self.dataset}/{l2p.name}.")
             except botocore.exceptions.ClientError as e:
-                self.logger.error(e)
+                self.logger.error(f"Error encoutered: {e}.")
                 error_list.append(l2p)
                 
         return l2p_s3, error_list
