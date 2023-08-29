@@ -102,7 +102,7 @@ class Uploader:
         self.processing_type = processing_type
         self.dataset = dataset
         self.logger = logger
-        self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
+        self.cumulus_topic = f"podaac-{venue}-cumulus-provider-input-sns"
         self.cross_account = self.get_cross_account_id(prefix)
         
     def get_cross_account_id(self, prefix):
