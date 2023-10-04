@@ -8,6 +8,7 @@ Args:
 [5] processing_type: String 'quicklook' or 'refined'.
 [6] dataset: Name of dataset that has been processed.
 [7] venue: Name of venue workflow is running in (e.g. sit, uat, ops)
+[8] ingest: Whether or not to send a CNM message to trigger L2P granule ingest.
 """
 
 # Standard imports 
@@ -32,12 +33,16 @@ def run_uploader():
     processing_type = sys.argv[5]
     dataset = sys.argv[6]
     venue = sys.argv[7]
+    if len(sys.argv) > 8:
+        ingest = True if sys.argv[8] == "true" else False
+    else:
+        ingest = True
     
     # Uplad L2P granules to S3 Bucket
     logger = get_logger()
     uploader = Uploader(prefix, job_index, input_json, data_dir, 
                         processing_type, dataset, logger, venue)
-    uploader.upload()
+    uploader.upload(ingest)
     
     end = datetime.datetime.now()
     logger.info(f"Total execution time: {end - start}")

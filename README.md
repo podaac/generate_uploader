@@ -22,6 +22,8 @@ Arguments:
 5. processing_type: String 'quicklook' or 'refined'.
 6. dataset: Name of dataset that has been processed.
 7. venue: Name of venue workflow is running in (e.g. sit, uat, ops)
+8. ingest: Whether or not to send a CNM message to trigger L2P granule ingest. 
+   String: "true" or "false"
 
 MODIS A QUICKLOOK: 
 `docker run --name upload --rm -e AWS_ACCESS_KEY_ID=$aws_key -e AWS_SECRET_ACCESS_KEY=$aws_secret -e AWS_DEFAULT_REGION=$default_region -v /uploader:/data uploader:latest 6233 podaac-sndbx-generate 0 -1 /data/input/processor_timestamp_list_AQUA_quicklook_2.json /data quicklook aqua`

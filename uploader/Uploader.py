@@ -119,7 +119,7 @@ class Uploader:
         
         return cross_account
         
-    def upload(self):
+    def upload(self, ingest):
         """Upload L2P granule files found in EFS processor output directory."""
         
         errors = {}
@@ -128,8 +128,12 @@ class Uploader:
             self.logger.info(f"Did not locate any L2P granules.")
         else:
             l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
-            sns = boto3.client("sns", region_name="us-west-2")  
-            errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
+            sns = boto3.client("sns", region_name="us-west-2")
+            if ingest:  
+                errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
+            else:
+                errors["publish"] = []
+                self.logger.info("CNM message was not sent and L2P granules will not be ingested.")
             error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
             if error_count > 0: self.report_errors(sns, errors)  
         
