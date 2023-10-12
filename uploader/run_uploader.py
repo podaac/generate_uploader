@@ -29,7 +29,7 @@ def run_uploader():
     prefix = sys.argv[1]
     job_index = check_for_aws_batch_index(int(sys.argv[2]))
     data_dir = pathlib.Path(sys.argv[3])
-    input_json = data_dir.joinpath("input", sys.argv[4])
+    input_json = data_dir.joinpath("processor", "input", sys.argv[4])
     processing_type = sys.argv[5]
     dataset = sys.argv[6]
     venue = sys.argv[7]
@@ -37,9 +37,22 @@ def run_uploader():
         ingest = True if sys.argv[8] == "true" else False
     else:
         ingest = True
-    
-    # Uplad L2P granules to S3 Bucket
+        
+    # Log information about current execution
     logger = get_logger()
+    if dataset == "aqua":
+        ds = "MODIS Aqua"
+    elif dataset == "terra":
+        ds = "MODIS Terra"
+    else:
+        ds = "VIIRS"
+    logger.info(f"Job identifier: {os.environ.get('AWS_BATCH_JOB_ID')}")
+    logger.info(f"Job index: {job_index}")
+    logger.info(f"JSON file: {input_json}")
+    logger.info(f"Dataset: {ds}")
+    logger.info(f"Processing type: {processing_type.upper()}")
+    
+    # Upload L2P granules to S3 Bucket
     uploader = Uploader(prefix, job_index, input_json, data_dir, 
                         processing_type, dataset, logger, venue)
     uploader.upload(ingest)

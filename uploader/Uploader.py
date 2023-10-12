@@ -71,6 +71,8 @@ class Uploader:
         "terra": "MODIS_T-JPL-L2P-v2019.0",
         "viirs": "VIIRS_NPP-JPL-L2P-v2016.2"
     }
+    COMBINER_PREFIX = "combiner_file_lists_"
+    PROCESSOR_PREFIX = "processor_timestamp_list_"
     
     def __init__(self, prefix, job_index, input_json, data_dir, processing_type,
                  dataset, logger, venue):
@@ -128,6 +130,8 @@ class Uploader:
             self.logger.info(f"Did not locate any L2P granules.")
         else:
             l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
+            count = len([l2p for l2p in l2p_s3 if "md5" not in l2p])
+            self.logger.info(f"Number of granules uploaded: {count}")
             sns = boto3.client("sns", region_name="us-west-2")
             if ingest:  
                 errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
@@ -135,7 +139,8 @@ class Uploader:
                 errors["publish"] = []
                 self.logger.info("CNM message was not sent and L2P granules will not be ingested.")
             error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
-            if error_count > 0: self.report_errors(sns, errors)  
+            if error_count > 0: self.report_errors(sns, errors)
+            self.log_provenance(l2p_list)
         
     def load_efs_l2p(self):
         """Load a list of L2P granules from EFS that have been processed."""
@@ -152,7 +157,8 @@ class Uploader:
         for timestamp in timestamps:
             ts = timestamp.replace("T", "")
             time_str = datetime.datetime.strptime(ts, "%Y%m%d%H%M%S")      
-            l2p_dir = self.data_dir.joinpath("output", 
+            l2p_dir = self.data_dir.joinpath("processor",
+                                             "output", 
                                              dataset_dict["dirname0"],
                                              dirname1,
                                              str(time_str.year),
@@ -197,6 +203,7 @@ class Uploader:
                 response = s3_client.upload_file(str(l2p), bucket, f"{self.dataset}/{l2p.name}", ExtraArgs={"ServerSideEncryption": "AES256"})
                 l2p_s3.append(f"s3://{bucket}/{self.dataset}/{l2p.name}")
                 self.logger.info(f"File uploaded: s3://{bucket}/{self.dataset}/{l2p.name}.")
+                if "md5" not in l2p.name: self.logger.info(f"Processed: {l2p.name}")
             except botocore.exceptions.ClientError as e:
                 self.logger.error(f"Error encoutered: {e}.")
                 error_list.append(l2p)
@@ -224,11 +231,12 @@ class Uploader:
         dirname1 = dataset_dict["dirname1"] if self.processing_type == "quicklook" else f"{dataset_dict['dirname1']}_REFINED"
         ts = filename.split('-')[0]
         time_str = datetime.datetime.strptime(ts, "%Y%m%d%H%M%S")      
-        l2p_dir = self.data_dir.joinpath("output", 
-                                        dataset_dict["dirname0"],
-                                        dirname1,
-                                        str(time_str.year),
-                                        str(time_str.timetuple().tm_yday))        
+        l2p_dir = self.data_dir.joinpath("processor",
+                                         "output", 
+                                         dataset_dict["dirname0"],
+                                         dirname1,
+                                         str(time_str.year),
+                                         str(time_str.timetuple().tm_yday))        
         # Build message
         message = {
             "version": self.VERSION,
@@ -337,3 +345,19 @@ class Uploader:
         
         self.logger.info(f"Message published to SNS Topic: {topic[0]['TopicArn']}")
         sys.exit(1)
+        
+    def log_provenance(self, l2p_list):
+        """Log provenance of each L2P granule."""
+        
+        # Load combiner JSON from process JSON file name
+        combiner_json = self.input_json.name.replace(self.PROCESSOR_PREFIX, self.COMBINER_PREFIX)
+        with open(self.data_dir / "combiner" / "downloads" / combiner_json) as jf:
+            sst_files = json.load(jf)[self.job_index]
+        
+        # Determine which SST files created the L2P granules
+        for l2p in l2p_list:
+            if "md5" in l2p.name: continue
+            ts = l2p.name.split('-')[0]
+            timestamp = f"{ts[0:8]}T{ts[8:]}"
+            provenance = list(filter(lambda e: (timestamp in e), sst_files))
+            self.logger.info(f"Provenance: {l2p.name} | {', '.join(provenance)}")
