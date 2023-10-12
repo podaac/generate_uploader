@@ -8,6 +8,7 @@ import sys
 # Third-part imports
 import boto3
 import botocore
+import requests
 
 class Uploader:
     """A class that uploads final L2P granules to an S3 bucket.
@@ -114,7 +115,7 @@ class Uploader:
             ssm_client = boto3.client('ssm', region_name="us-west-2")
             cross_account = ssm_client.get_parameter(Name=f"{prefix}-cumulus-account", WithDecryption=True)["Parameter"]["Value"]
         except botocore.exceptions.ClientError as error:
-            self.logger.error(f"Failed to obtain cross account identifier for Cumulus topic.")
+            self.logger.info(f"Failed to obtain cross account identifier for Cumulus topic.")
             self.logger.error(f"Error - {error}")
             self.logger.info(f"System exit.")
             sys.exit(1)
@@ -139,7 +140,9 @@ class Uploader:
                 errors["publish"] = []
                 self.logger.info("CNM message was not sent and L2P granules will not be ingested.")
             error_count = len(errors["missing_checksum"]) + len(errors["upload"]) + len(errors["publish"])
-            if error_count > 0: self.report_errors(sns, errors)
+            if error_count > 0: 
+                log_metadata = get_ecs_task_metadata(self.logger)
+                self.report_errors(sns, log_metadata, errors)
             self.log_provenance(l2p_list)
         
     def load_efs_l2p(self):
@@ -288,57 +291,68 @@ class Uploader:
             )
             self.logger.info(f"{message['identifier']} message published to SNS Topic: {self.cumulus_topic}")
         except botocore.exceptions.ClientError as e:
-            self.logger.error(f"Failed to publish {message['identifier']} to SNS Topic: {self.cumulus_topic}")
+            self.logger.info(f"Failed to publish {message['identifier']} to SNS Topic: {self.cumulus_topic}")
             self.logger.error(e)
             errors.append(message['identifier'])
         
         return errors
     
-    def report_errors(self, sns, error_list):
+    def report_errors(self, sns, log_metadata, error_list):
         """Report on files that could not be uploaded.
         
         Logs to CloudWatch and sends an SNS Topic notification.
         """
         
         # Create message and log errors
-        message = ""
+        message = f"Uploader AWS Batch job L2P granule failures for {datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}."
+        
+        message += "\n\nJOB INFORMATION:\n"
+        message += f"Job Identifier: {os.environ.get('AWS_BATCH_JOB_ID')}\n"
+        message += f"Job Queue: {os.environ.get('AWS_BATCH_JQ_NAME')}"
+        
+        if log_metadata:
+            message += "\n\n" + log_metadata
+            
+        message += f"\n\nERROR INFORMATION:"
         
         missing_errors = []
         for error_file in error_list["missing_checksum"]:
             missing_errors.append(str(error_file))
             self.logger.error(f"Missing checksum file: {error_file}")
         if len(missing_errors) > 0:
-            message = f"\n\nThe following L2P granule files are missing checksums...\n" \
+            message = f"\nThe following L2P granule files are missing checksums...\n" \
                 + "\n".join(missing_errors)
         
         upload_errors = []
         for error_file in error_list["upload"]:
             upload_errors.append(str(error_file))
-            self.logger.error(f"Failed to upload to S3: {error_file}")
+            self.logger.info(f"Failed to upload to S3: {error_file}")
         if len(upload_errors) > 0:
-            message += f"\n\nThe following L2P granule files failed to upload to S3 bucket...\n" \
+            message += f"\nThe following L2P granule files failed to upload to S3 bucket...\n" \
             + "\n".join(upload_errors)
         
         publish_errors = []
         for error_file in error_list["publish"]:
             publish_errors.append(error_file)
-            self.logger.error(f"Failed to publish to cumulus topic: {error_file}")
+            self.logger.info(f"Failed to publish to cumulus topic: {error_file}")
         if len(publish_errors) > 0:
-            message += f"\n\nThe following L2P granule NetCDF and checksum files failed to be published to the Cumulus Topic...\n" \
+            message += f"\nThe following L2P granule NetCDF and checksum files failed to be published to the Cumulus Topic...\n" \
             + "\n".join(publish_errors)
+            
+        message += "\n\nPlease follow these steps to diagnose the error: https://wiki.jpl.nasa.gov/pages/viewpage.action?pageId=771470900#GenerateCloudErrorDetection&Recovery-AWSBatchJobFailures\n\n\n"
         
         # Send notification
         try:
             topics = sns.list_topics()
             topic = list(filter(lambda x: (os.environ.get("TOPIC") in x["TopicArn"]), topics["Topics"]))
-            subject = f"UPLOADER: L2P granule failures {datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}"
+            subject = "Generate workflow error: UPLOADER error"
             response = sns.publish(
                 TopicArn = topic[0]["TopicArn"],
                 Message = message,
                 Subject = subject
             )
         except botocore.exceptions.ClientError as e:
-            self.logger.error(f"Failed to publish to SNS Topic: {topic[0]['TopicArn']}")
+            self.logger.info(f"Failed to publish to SNS Topic: {topic[0]['TopicArn']}")
             self.logger.error(f"Error - {e}")
             self.logger.info(f"System exit.")
             sys.exit(1)
@@ -361,3 +375,18 @@ class Uploader:
             timestamp = f"{ts[0:8]}T{ts[8:]}"
             provenance = list(filter(lambda e: (timestamp in e), sst_files))
             self.logger.info(f"Provenance: {l2p.name} | {', '.join(provenance)}")
+
+def get_ecs_task_metadata(logger):
+    """Return log group and log stream if available from ECS task endpoint."""
+    
+    ecs_endpoint = os.getenv("ECS_CONTAINER_METADATA_URI_V4")
+    if ecs_endpoint:
+        response = requests.get(ecs_endpoint)
+        logger.info(f"ECS endpoint response: {response}.")
+        response_json = response.json()
+        log_group = response_json["LogOptions"]["awslogs-group"]
+        log_stream = response_json["LogOptions"]["awslogs-stream"]
+        log = f"Log Group: {log_group}\nLog Stream: {log_stream}"
+    else:
+        log = ""
+    return log
