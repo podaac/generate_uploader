@@ -48,7 +48,7 @@ def run_uploader():
         ds = "VIIRS"
     logger.info(f"Job identifier: {os.environ.get('AWS_BATCH_JOB_ID')}")
     logger.info(f"Job index: {job_index}")
-    logger.info(f"JSON file: {input_json}")
+    logger.info(f"JSON file: {input_json.name}")
     logger.info(f"Dataset: {ds}")
     logger.info(f"Processing type: {processing_type.upper()}")
     
