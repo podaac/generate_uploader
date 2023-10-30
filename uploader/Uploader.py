@@ -107,6 +107,9 @@ class Uploader:
         self.logger = logger
         self.cumulus_topic = f"podaac-{venue}-cumulus-provider-input-sns"
         self.cross_account = self.get_cross_account_id(prefix)
+        self.processed = []
+        self.provenance = []
+        self.num_uploaded = 0
         
     def get_cross_account_id(self, prefix):
         """Return cross account identifier from SSM parameter store."""
@@ -133,6 +136,7 @@ class Uploader:
             l2p_s3, errors["upload"] = self.upload_l2p_s3(l2p_list)
             count = len([l2p for l2p in l2p_s3 if "md5" not in l2p])
             self.logger.info(f"Number of granules uploaded: {count}")
+            self.num_uploaded = count
             sns = boto3.client("sns", region_name="us-west-2")
             if ingest:  
                 errors["publish"] = self.publish_cnm_message(sns, l2p_s3)
@@ -207,6 +211,7 @@ class Uploader:
                 l2p_s3.append(f"s3://{bucket}/{self.dataset}/{l2p.name}")
                 self.logger.info(f"File uploaded: s3://{bucket}/{self.dataset}/{l2p.name}.")
                 if "md5" not in l2p.name: self.logger.info(f"Processed: {l2p.name}")
+                if "md5" not in l2p.name: self.processed.append(l2p.name)
             except botocore.exceptions.ClientError as e:
                 self.logger.error(f"Error encoutered: {e}.")
                 error_list.append(l2p)
@@ -375,6 +380,7 @@ class Uploader:
             timestamp = f"{ts[0:8]}T{ts[8:]}"
             provenance = list(filter(lambda e: (timestamp in e), sst_files))
             self.logger.info(f"Provenance: {l2p.name} | {', '.join(provenance)}")
+            self.provenance.append(f"{l2p.name} | {'; '.join(provenance)}")
 
 def get_ecs_task_metadata(logger):
     """Return log group and log stream if available from ECS task endpoint."""
