@@ -51,7 +51,7 @@ def run_uploader():
     logger.info(f"JSON file: {input_json.name}")
     logger.info(f"Dataset: {ds}")
     logger.info(f"Processing type: {processing_type.upper()}")
-    execution_data = f"job_id: {os.environ.get('AWS_BATCH_JOB_ID')} - job_index {job_index} - json_file: {input_json.name} - dataset: {ds} - processing_type: {processing_type.upper()}"
+    execution_data = f"dataset: {ds} - processing_type: {processing_type.upper()} - job_id: {os.environ.get('AWS_BATCH_JOB_ID')} - job_index {job_index} - json_file: {input_json.name}"
     
     # Upload L2P granules to S3 Bucket
     uploader = Uploader(prefix, job_index, input_json, data_dir, 
