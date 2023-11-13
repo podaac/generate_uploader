@@ -108,7 +108,10 @@ class Uploader:
         if venue == "ops":
             self.cumulus_topic = f"podaac-{venue}-cumulus-provider-input-sns"
         else:
-            self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
+            if dataset == "viirs":
+                self.cumulus_topic = f"podaac-{venue}-cumulus-provider-input-sns"
+            else:
+                self.cumulus_topic = f"podaac-{venue}-cumulus-throttled-provider-input-sns"
         self.cross_account = self.get_cross_account_id(prefix)
         self.processed = []
         self.provenance = []
