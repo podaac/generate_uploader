@@ -13,8 +13,18 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
     },
     "mountPoints": [
         {
-            "sourceVolume": "uploader",
-            "containerPath": "/data",
+            "sourceVolume": "combiner",
+            "containerPath": "/data/combiner/downloads",
+            "readOnly": false
+        },
+        {
+            "sourceVolume": "processor_input",
+            "containerPath": "/data/processor/input",
+            "readOnly": false
+        },
+        {
+            "sourceVolume": "processor_output",
+            "containerPath": "/data/processor/output",
             "readOnly": false
         }
     ],
@@ -24,10 +34,24 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
     ],
     "volumes": [
         {
-            "name": "uploader",
+            "name": "combiner",
             "efsVolumeConfiguration": {
             "fileSystemId": "${data.aws_efs_file_system.aws_efs_generate.file_system_id}",
-            "rootDirectory": "/processor"
+            "rootDirectory": "/combiner/downloads"
+            }
+        },
+        {
+            "name": "processor_input",
+            "efsVolumeConfiguration": {
+            "fileSystemId": "${data.aws_efs_file_system.aws_efs_generate.file_system_id}",
+            "rootDirectory": "/processor/input"
+            }
+        },
+        {
+            "name": "processor_output",
+            "efsVolumeConfiguration": {
+            "fileSystemId": "${data.aws_efs_file_system.aws_efs_generate.file_system_id}",
+            "rootDirectory": "/processor/output"
             }
         }
     ],

@@ -8,6 +8,7 @@ Args:
 [5] processing_type: String 'quicklook' or 'refined'.
 [6] dataset: Name of dataset that has been processed.
 [7] venue: Name of venue workflow is running in (e.g. sit, uat, ops)
+[8] ingest: Whether or not to send a CNM message to trigger L2P granule ingest.
 """
 
 # Standard imports 
@@ -28,16 +29,37 @@ def run_uploader():
     prefix = sys.argv[1]
     job_index = check_for_aws_batch_index(int(sys.argv[2]))
     data_dir = pathlib.Path(sys.argv[3])
-    input_json = data_dir.joinpath("input", sys.argv[4])
+    input_json = data_dir.joinpath("processor", "input", sys.argv[4])
     processing_type = sys.argv[5]
     dataset = sys.argv[6]
     venue = sys.argv[7]
-    
-    # Uplad L2P granules to S3 Bucket
+    if len(sys.argv) > 8:
+        ingest = True if sys.argv[8] == "true" else False
+    else:
+        ingest = True
+        
+    # Log information about current execution
     logger = get_logger()
+    if dataset == "aqua":
+        ds = "MODIS Aqua"
+    elif dataset == "terra":
+        ds = "MODIS Terra"
+    else:
+        ds = "VIIRS"
+    logger.info(f"Job identifier: {os.environ.get('AWS_BATCH_JOB_ID')}")
+    logger.info(f"Job index: {job_index}")
+    logger.info(f"JSON file: {input_json.name}")
+    logger.info(f"Dataset: {ds}")
+    logger.info(f"Processing type: {processing_type.upper()}")
+    execution_data = f"dataset: {ds} - processing_type: {processing_type.upper()} - job_id: {os.environ.get('AWS_BATCH_JOB_ID')} - job_index {job_index} - json_file: {input_json.name}"
+    
+    # Upload L2P granules to S3 Bucket
     uploader = Uploader(prefix, job_index, input_json, data_dir, 
                         processing_type, dataset, logger, venue)
-    uploader.upload()
+    uploader.upload(ingest)
+    
+    # Log final message
+    print_final_log(logger, execution_data, uploader.processed, uploader.provenance, uploader.num_uploaded)
     
     end = datetime.datetime.now()
     logger.info(f"Total execution time: {end - start}")
@@ -72,6 +94,17 @@ def get_logger():
 
     # Return logger
     return logger
+
+def print_final_log(logger, execution_data, processed, provenance, num_uploaded):
+    """Print final log message."""
     
+    # Organize file data into a string
+    final_log_message = f"{execution_data} - number_uploader: {num_uploaded}"
+    if len(processed) > 0: final_log_message += f" - processed: {', '.join(processed)}"
+    if len(provenance) > 0: final_log_message += f" - provenance: {', '.join(provenance)}"
+    
+    # Print final log message and remove temp log file
+    logger.info(final_log_message)
+
 if __name__ == "__main__":
     run_uploader()
