@@ -51,7 +51,7 @@ def run_uploader():
     logger.info(f"JSON file: {input_json.name}")
     logger.info(f"Dataset: {ds}")
     logger.info(f"Processing type: {processing_type.upper()}")
-    execution_data = f"dataset: {ds} - processing_type: {processing_type.upper()} - job_id: {os.environ.get('AWS_BATCH_JOB_ID')} - job_index {job_index} - json_file: {input_json.name}"
+    execution_data = f"dataset: {ds} - processing_type: {processing_type.upper()} - job_id: {os.environ.get('AWS_BATCH_JOB_ID')} - job_index: {job_index} - json_file: {input_json.name}"
     
     # Upload L2P granules to S3 Bucket
     uploader = Uploader(prefix, job_index, input_json, data_dir, 
@@ -99,7 +99,7 @@ def print_final_log(logger, execution_data, processed, provenance, num_uploaded)
     """Print final log message."""
     
     # Organize file data into a string
-    final_log_message = f"{execution_data} - number_uploader: {num_uploaded}"
+    final_log_message = f"{execution_data} - number_uploaded: {num_uploaded}"
     if len(processed) > 0: final_log_message += f" - processed: {', '.join(processed)}"
     if len(provenance) > 0: final_log_message += f" - provenance: {', '.join(provenance)}"
     
