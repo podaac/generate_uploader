@@ -99,7 +99,7 @@ def print_final_log(logger, execution_data, processed, provenance, num_uploaded)
     """Print final log message."""
     
     # Organize file data into a string
-    final_log_message = f"{execution_data} - number_uploaded: {num_uploaded}"
+    final_log_message = f"final_log: {execution_data} - number_uploaded: {num_uploaded}"
     if len(processed) > 0: final_log_message += f" - processed: {', '.join(processed)}"
     if len(provenance) > 0: final_log_message += f" - provenance: {', '.join(provenance)}"
     
