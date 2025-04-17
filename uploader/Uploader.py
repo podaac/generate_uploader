@@ -65,9 +65,9 @@ class Uploader:
             "filename": "TS-JPL-L2P_GHRSST-SSTskin-VIIRS_NPP-T-v02.0-fv01.0",
         },
         "jpss1": {
-            "dirname0": "JPSS1_L2P_CORE_NETCDF",
+            "dirname0": "VIIRS_L2P_CORE_NETCDF",
             "dirname1": "JPSS1",
-            "filename": "TS-JPL-L2P_GHRSST-SSTskin-JPSS1_NPP-T-v02.0-fv01.0",
+            "filename": "TS-JPL-L2P_GHRSST-SSTskin-JPSS1-T-v02.0-fv01.0",
         }
     }
     VERSION = "1.4"
@@ -189,6 +189,8 @@ class Uploader:
                     self.logger.info(f"Located Day File: {day_file_nc}")
                 else:
                     missing_checksum.append(day_file_nc)
+            else:
+                self.logger.error(f'day_file_nc: {day_file_nc} does not exist or is not a file.')
             # Check for night file
             night_file = file.replace('-T-', '-N-')
             night_file_nc = l2p_dir.joinpath(f"{night_file}.nc")
