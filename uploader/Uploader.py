@@ -76,7 +76,7 @@ class Uploader:
         "aqua": "MODIS_A-JPL-L2P-v2019.0",
         "terra": "MODIS_T-JPL-L2P-v2019.0",
         "viirs": "VIIRS_NPP-JPL-L2P-v2016.2",
-        "jpss1": "JPSS1-JPL-L2P-v2016.2"
+        "jpss1": "VIIRS_JPSS1-JPL-L2P-v2024.0"
     }
     COMBINER_PREFIX = "combiner_file_lists_"
     PROCESSOR_PREFIX = "processor_timestamp_list_"
