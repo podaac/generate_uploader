@@ -44,6 +44,8 @@ def run_uploader():
         ds = "MODIS Aqua"
     elif dataset == "terra":
         ds = "MODIS Terra"
+    elif dataset == "jpss1":
+        ds = "JPSS1"
     else:
         ds = "VIIRS"
     logger.info(f"Job identifier: {os.environ.get('AWS_BATCH_JOB_ID')}")
