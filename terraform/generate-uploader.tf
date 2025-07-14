@@ -29,8 +29,8 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
         }
     ],
     "resourceRequirements" : [
-        { "type": "MEMORY", "value": "1024"},
-        { "type": "VCPU", "value": "1024" }
+        { "type": "MEMORY", "value": "2048"},
+        { "type": "VCPU", "value": "1" }
     ],
     "volumes": [
         {
@@ -56,6 +56,7 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
         }
     ],
     "jobRoleArn": "${aws_iam_role.aws_batch_job_role_uploader.arn}",
+    "executionRoleArn": "${data.aws_iam_role.batch_ecs_execution_role.arn}",
     "environment": [
       {
         "name": "TOPIC", "value": "${var.prefix}-upload-error"
@@ -63,7 +64,7 @@ resource "aws_batch_job_definition" "generate_batch_jd_uploader" {
     ]
   }
   CONTAINER_PROPERTIES
-  platform_capabilities = ["EC2"]
+  platform_capabilities = ["FARGATE"]
   propagate_tags        = true
   retry_strategy {
     attempts = 3
