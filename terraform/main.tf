@@ -36,6 +36,11 @@ data "aws_efs_file_system" "aws_efs_generate" {
   creation_token = var.prefix
 }
 
+data "aws_iam_role" "batch_ecs_execution_role" {
+  name = "${var.prefix}-batch-ecs-execution-role"
+}
+
+
 data "aws_s3_bucket" "l2p_granules" {
   bucket = "${var.prefix}-l2p-granules"
 }
