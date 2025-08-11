@@ -63,6 +63,11 @@ class Uploader:
             "dirname0": "VIIRS_L2P_CORE_NETCDF",
             "dirname1": "VIIRS",
             "filename": "TS-JPL-L2P_GHRSST-SSTskin-VIIRS_NPP-T-v02.0-fv01.0",
+        },
+        "jpss1": {
+            "dirname0": "VIIRS_L2P_CORE_NETCDF",
+            "dirname1": "JPSS1",
+            "filename": "TS-JPL-L2P_GHRSST-SSTskin-JPSS1-T-v02.0-fv01.0",
         }
     }
     VERSION = "1.4"
@@ -70,7 +75,8 @@ class Uploader:
     COLLECTION = {
         "aqua": "MODIS_A-JPL-L2P-v2019.0",
         "terra": "MODIS_T-JPL-L2P-v2019.0",
-        "viirs": "VIIRS_NPP-JPL-L2P-v2016.2"
+        "viirs": "VIIRS_NPP-JPL-L2P-v2016.2",
+        "jpss1": "VIIRS_JPSS1-JPL-L2P-v2024.0"
     }
     COMBINER_PREFIX = "combiner_file_lists_"
     PROCESSOR_PREFIX = "processor_timestamp_list_"
@@ -183,6 +189,8 @@ class Uploader:
                     self.logger.info(f"Located Day File: {day_file_nc}")
                 else:
                     missing_checksum.append(day_file_nc)
+            else:
+                self.logger.error(f'day_file_nc: {day_file_nc} does not exist or is not a file.')
             # Check for night file
             night_file = file.replace('-T-', '-N-')
             night_file_nc = l2p_dir.joinpath(f"{night_file}.nc")
